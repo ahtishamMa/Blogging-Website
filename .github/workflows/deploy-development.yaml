@@ -1,33 +1,34 @@
-name: wf-deploy-development
+name: pr-validation
 
 on:
-  push:
+  pull_request:
     branches:
       - develop
 
 jobs:
-  build-develop-job:
+  linting-job:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-      
-      - name: Build website
-        run: |
-          npx parcel build "./src/index.html" --dist-dir "./dev" --public-url "./"
-      
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: "./dev"
+        uses: actions/checkout@v3
 
-  deploy-develop-job:
-    needs: build-develop-job
-    environment: "deployment-env"
-    permissions:
-      pages: write
-      id-token: write
+      - name: Install dependencies
+        run: npm install htmlhint stylelint --save-dev
+
+      - name: Lint HTML files
+        run: npx htmlhint "src/**/*.html"
+
+      - name: Lint CSS files
+        run: npx stylelint "styles/**/*.css"
+
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: npm install parcel-bundler --save-dev
+
+      - name: Build project
+        run: npx parcel build src/index.html
